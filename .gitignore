@@ -1,0 +1,7 @@
+.DS_Store
+*.swp
+*.swo
+*.bak
+.env
+.env.*
+!.env.example
