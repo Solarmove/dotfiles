@@ -71,7 +71,13 @@ return {
       ---@type lspconfig.options
       servers = {
         -- pyright will be automatically installed with mason and loaded with lspconfig
-        pyright = {},
+        pyright = {
+          cmd = {
+            vim.fn.expand("~/.local/bin/node"),
+            vim.fn.stdpath("data") .. "/mason/packages/pyright/node_modules/pyright/langserver.index.js",
+            "--stdio",
+          },
+        },
       },
     },
   },

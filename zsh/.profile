@@ -3,3 +3,5 @@
 # End of Docker Desktop section.
 
 . "$HOME/.local/bin/env"
+
+. "/tmp/codex-task-uv/env"
