@@ -1,32 +1,20 @@
-# =========================================================
-
-# Plugins
-# =========================================================
-
-
-ZPLUGINDIR="${ZDOTDIR:-$HOME/.config/zsh}/plugins"
-
+# Plugins are installed by install.sh, never by starting a shell.
+ZPLUGINDIR="${XDG_DATA_HOME:-$HOME/.local/share}/zsh/plugins"
 _zplugin_load() {
-  local plugin_path="${ZPLUGINDIR}/${2}"
-  if [[ ! -d "$plugin_path" ]]; then
-    mkdir -p "$ZPLUGINDIR"
-    echo "Installing ${2}..."
-    git clone --depth=1 "https://github.com/${1}/${2}" "$plugin_path" \
-      || { echo "ERROR: failed to install ${2}" >&2; return 1; }
-  fi
-  source "${plugin_path}/${2}.plugin.zsh"
+  local plugin_file="$ZPLUGINDIR/$1/$1.plugin.zsh"
+  [[ -f "$plugin_file" ]] && source "$plugin_file"
+  return 0
 }
-
 zplugin-update() {
   local dir
-  for dir in "${ZPLUGINDIR}"/*/; do
-    echo "Updating ${dir:t}..."
-    git -C "$dir" pull --ff-only
+  for dir in "$ZPLUGINDIR"/*(/N); do
+    git -C "$dir" pull --ff-only || return
   done
 }
-
-
-_zplugin_load zsh-users zsh-autosuggestions
-_zplugin_load zsh-users zsh-history-substring-search
-_zplugin_load jeffreytse zsh-vi-mode
-_zplugin_load zdharma-continuum fast-syntax-highlighting
+_zplugin_load zsh-vi-mode
+if command -v fzf >/dev/null 2>&1; then
+  _zplugin_load fzf-tab
+fi
+_zplugin_load zsh-autosuggestions
+_zplugin_load zsh-history-substring-search
+_zplugin_load fast-syntax-highlighting

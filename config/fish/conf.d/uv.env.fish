@@ -1,4 +1,3 @@
-
-source "$HOME/.local/bin/env.fish"
-
-source "/tmp/codex-task-uv/env.fish"
+if test -f "$HOME/.local/bin/env.fish"
+    source "$HOME/.local/bin/env.fish"
+end

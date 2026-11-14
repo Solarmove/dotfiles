@@ -1,0 +1,103 @@
+{
+  "workbench.experimental.modernUI": true,
+  "glassit.alpha": 252,
+  "editor.fontFamily": "'Hack Nerd Font', monospace",
+  "editor.fontWeight": "normal",
+  "editor.fontLigatures": false,
+  "editor.letterSpacing": 0,
+  "editor.lineHeight": 22,
+  "terminal.integrated.fontFamily": "'JetBrainsMono NF', monospace",
+  "terminal.integrated.fontWeight": "normal",
+  "terminal.integrated.fontWeightBold": "bold",
+  "terminal.integrated.ligatures.enabled": false,
+  "terminal.integrated.letterSpacing": 0,
+  "terminal.integrated.lineHeight": 1.2,
+  "workbench.colorTheme": "Monokai",
+  "update.mode": "none",
+  "window.menuBarVisibility": "compact",
+  "workbench.iconTheme": "material-icon-theme",
+  "window.commandCenter": false,
+  "workbench.layoutControl.enabled": false,
+  "chat.titleBar.openInAgentsWindow.enabled": false,
+  "workbench.browser.showInTitleBar": true,
+  "files.autoSave": "afterDelay",
+  "git.autofetch": true,
+  "workbench.startupEditor": "none",
+  "python.terminal.useEnvFile": true,
+  "python.envFile": "${workspaceFolder}/.env",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    ".ruff_cache": true,
+    ".idea": true,
+    ".vscode": true,
+    ".venv": false
+  },
+  "python.analysis.typeCheckingMode": "standard",
+  "explorer.confirmDelete": false,
+  "python.analysis.indexing": true,
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.userFileIndexingLimit": -1,
+  "python.analysis.extraPaths": [
+    "./src"
+  ],
+  "python.analysis.packageIndexDepths": [
+    {
+      "name": "sqlalchemy",
+      "depth": 5,
+      "includeAllSymbols": true
+    },
+    {
+      "name": "litestar",
+      "depth": 5,
+      "includeAllSymbols": true
+    },
+    {
+      "name": "dishka",
+      "depth": 5,
+      "includeAllSymbols": true
+    }
+  ],
+  "python.languageServer": "Default",
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "always"
+    }
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "vscode.json-language-features"
+  },
+  "git.confirmSync": false,
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "explorer.autoReveal": false,
+  "editor.gotoLocation.multipleDefinitions": "goto",
+  "[yaml]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "editor.fontSize": 13,
+  "editor.formatOnSave": true,
+  "[markdown]": {
+    "editor.defaultFormatter": "charliermarsh.ruff"
+  },
+  "terminal.integrated.tabs.enabled": false,
+  "makefile.configureOnOpen": true,
+  "gitlens.views.scm.grouped.views": {
+    "commits": true,
+    "branches": true,
+    "remotes": true,
+    "stashes": true,
+    "tags": true,
+    "worktrees": true,
+    "contributors": true,
+    "fileHistory": false,
+    "repositories": true,
+    "searchAndCompare": false,
+    "launchpad": true
+  },
+  "github.copilot.enable": {
+    "python": true
+  },
+  "github.copilot.nextEditSuggestions.eagerness": "medium"
+}

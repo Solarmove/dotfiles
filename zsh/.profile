@@ -1,7 +1,4 @@
-# The following lines were added by Docker Desktop to add commands to your PATH.
-[[ -d "$HOME/.docker/bin" ]] && export PATH="$PATH:$HOME/.docker/bin"
-# End of Docker Desktop section.
-
-. "$HOME/.local/bin/env"
-
-. "/tmp/codex-task-uv/env"
+# POSIX login shell configuration.
+[ ! -d "$HOME/.local/bin" ] || export PATH="$HOME/.local/bin:$PATH"
+[ ! -f "$HOME/.local/bin/env" ] || . "$HOME/.local/bin/env"
+[ ! -d "$HOME/.docker/bin" ] || export PATH="$PATH:$HOME/.docker/bin"

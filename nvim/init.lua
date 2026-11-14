@@ -6,7 +6,7 @@ vim.opt.encoding = "utf-8"       -- Общая кодировка (необяз�
 vim.opt.fileencoding = "utf-8"  -- Кодировка файлов
 vim.opt.number = true -- Show line numbers
 vim.opt.cursorline = false -- Disable highlight current cursor's line
-vim.opt.swapfile = false -- Disable .swp files 
+vim.opt.swapfile = false -- Disable .swp files
 vim.opt.scrolloff = 7 -- Number of lines left visible above/below the cursor when scrolling
 vim.opt.tabstop = 4 -- Spaces instead of one tab
 vim.opt.softtabstop = 4 -- Spaces instead of one tab
@@ -28,8 +28,8 @@ vim.api.nvim_create_autocmd('FileType', {
     callback = function()
 
         vim.opt.colorcolumn = '80'
-        vim.keymap.set('n', '<C-h>', ':w<CR>:!uv run python3.14 %<CR>', { buffer = true, silent = true })
-        vim.keymap.set('i', '<C-h>', '<Esc>:w<CR>:!uv run python3.14 %<CR>', { buffer = true, silent = true })
+        vim.keymap.set('n', '<C-h>', ':w<CR>:!uv run python %<CR>', { buffer = true, silent = true })
+        vim.keymap.set('i', '<C-h>', '<Esc>:w<CR>:!uv run python %<CR>', { buffer = true, silent = true })
     end
 })
 
@@ -63,12 +63,23 @@ vim.keymap.set('n', ',g', ':Telescope live_grep<CR>', { noremap = true })
 vim.keymap.set('n', '<leader>e', '<cmd>Lexplore<CR>', { desc = 'Toggle file explorer' })
 vim.keymap.set('n', 'gw', ':bp|bd #<CR>', { noremap = true, silent = true })
 
--- Plugins with packer.nvim
-require('packer').startup(function(use)
+-- Bootstrap lazy.nvim (plugin manager only; this is not LazyVim).
+if vim.fn.has("nvim-0.11") == 0 then
+  error("This configuration requires Neovim >= 0.11. Run dotfiles/install.sh.")
+end
+local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
+if not vim.uv.fs_stat(lazypath) then
+  local output = vim.fn.system({ "git", "clone", "--filter=blob:none", "--branch=stable",
+    "https://github.com/folke/lazy.nvim.git", lazypath })
+  if vim.v.shell_error ~= 0 then
+    error("Could not install lazy.nvim: " .. output)
+  end
+end
+vim.opt.rtp:prepend(lazypath)
+local plugins = {
 
-    use 'wbthomason/packer.nvim'
 
-    use {
+    {
       'L3MON4D3/LuaSnip',
       config = function()
         local ls = require("luasnip")
@@ -89,36 +100,23 @@ require('packer').startup(function(use)
         end, { silent = true })
 
       end
-    }
+    },
 
-    use 'nvim-lua/plenary.nvim' -- For Telescope plugin
-    use 'neovim/nvim-lspconfig' -- LSP
-    use 'hrsh7th/nvim-cmp' -- Autocomplete
-    use 'hrsh7th/cmp-nvim-lsp'
-    use 'saadparwaiz1/cmp_luasnip'
-    use { 'nvim-treesitter/nvim-treesitter', branch = 'master' } -- Legacy API used below
+    { 'nvim-lua/plenary.nvim' }, -- For Telescope plugin
+    { 'neovim/nvim-lspconfig' }, -- LSP
+    { 'hrsh7th/nvim-cmp' }, -- Autocomplete
+    { 'hrsh7th/cmp-nvim-lsp' },
+    { 'saadparwaiz1/cmp_luasnip' },
+    { 'nvim-treesitter/nvim-treesitter', branch = 'master', commit = 'cf12346a3414fa1b06af75c79faebe7f76df080a', build = ':TSUpdate' }, -- Legacy API used below
 
-    use 'morhetz/gruvbox' -- Color schemes
-    use 'ayu-theme/ayu-vim'
-    --[[
-    use({
-      'rose-pine/neovim',
-      as = 'rose-pine',
-      config = function()
-        require('rose-pine').setup({
-          dark_variant = 'main', -- Variants: 'main', 'moon', 'dawn'
-          disable_background = true, -- Disable background
-          disable_float_background = false, -- Disable background for windows
-        })
-        vim.cmd('colorscheme rose-pine')
-      end,
-    })
-    --]]
-    use 'sainnhe/gruvbox-material'
-    use 'rebelot/kanagawa.nvim'
+    { 'morhetz/gruvbox' }, -- Color schemes
+    { 'ayu-theme/ayu-vim' },
+
+    { 'sainnhe/gruvbox-material' },
+    { 'rebelot/kanagawa.nvim' },
 
     -- Comment/uncomment by gcc for current line of gc for seleted lines
-    use {
+    {
       'numToStr/Comment.nvim',
       config = function()
         require('Comment').setup({
@@ -135,17 +133,17 @@ require('packer').startup(function(use)
             },
         })
       end
-    }
+    },
 
-    use 'nvim-telescope/telescope.nvim'
-    use { 'nvim-telescope/telescope-fzf-native.nvim', run = 'make' }
+    { 'nvim-telescope/telescope.nvim', tag = '0.1.8' },
+    { 'nvim-telescope/telescope-fzf-native.nvim', build = 'make', cond = vim.fn.executable('make') == 1 and vim.fn.executable('cc') == 1 },
 
-    use 'Pocco81/auto-save.nvim' -- Автосохранение
-    use 'nvimtools/none-ls.nvim'
+    { 'okuuva/auto-save.nvim' }, -- Автосохранение
+    { 'nvimtools/none-ls.nvim' },
 
-    use {'kaarmu/typst.vim', ft = {'typst'}} -- typst
+    {'kaarmu/typst.vim', ft = {'typst'}}, -- typst
 
-    use {
+    {
       "stevearc/oil.nvim",
       config = function()
         local oil = require("oil")
@@ -160,15 +158,27 @@ require('packer').startup(function(use)
           },
         })
       end
-    }
+    },
 
-    use {
+    {
       "nvim-mini/mini.surround",
       config = function()
         require("mini.surround").setup()
       end
-    }
-end)
+    },
+}
+require("lazy").setup(plugins, {
+  defaults = { lazy = false },
+  install = { colorscheme = { "habamax" } },
+  checker = { enabled = false },
+  change_detection = { notify = false },
+  rocks = { enabled = false },
+})
+
+-- Installer restores plugin versions before loading the rest of the configuration.
+if vim.env.DOTFILES_NVIM_INSTALL == "1" then
+  return
+end
 
 -- Color scheme
 --vim.cmd([[colorscheme "rose-pine-main"]])
@@ -212,7 +222,9 @@ vim.lsp.config("pyright", {
         },
     },
 })
-vim.lsp.enable("pyright")
+if vim.fn.executable("pyright-langserver") == 1 then
+  vim.lsp.enable("pyright")
+end
 
 -- Пример настройки LSP для TypeScript
 vim.lsp.config("ts_ls", {
@@ -221,11 +233,13 @@ vim.lsp.config("ts_ls", {
     init_options = {
         hostInfo = "neovim",
         tsserver = {
-            path = vim.fn.expand("~/.local/lib/node_modules/typescript/lib/tsserver.js"),
+            -- typescript-language-server resolves the locally installed TypeScript.
         },
     },
 })
-vim.lsp.enable("ts_ls")
+if vim.fn.executable("typescript-language-server") == 1 then
+  vim.lsp.enable("ts_ls")
+end
 
 -- Пример настройки LSP для Go
 vim.lsp.config("gopls", {
@@ -241,7 +255,9 @@ vim.lsp.config("gopls", {
         },
     },
 })
-vim.lsp.enable("gopls")
+if vim.fn.executable("gopls") == 1 then
+  vim.lsp.enable("gopls")
+end
 
 -- Пример настройки LSP для Rust
 vim.lsp.config("rust_analyzer", {
@@ -259,12 +275,14 @@ vim.lsp.config("rust_analyzer", {
         },
     },
 })
-vim.lsp.enable("rust_analyzer")
+if vim.fn.executable("rust-analyzer") == 1 then
+  vim.lsp.enable("rust_analyzer")
+end
 
 -- Null-ls для Prettier
 require('null-ls').setup({
     sources = {
-        require('null-ls').builtins.formatting.prettier,
+        vim.fn.executable("prettier") == 1 and require('null-ls').builtins.formatting.prettier or nil,
     }
 
 })
@@ -286,6 +304,7 @@ pcall(require('telescope').load_extension, 'fzf')
 require('auto-save').setup()
 
 -- Copy selected text to Windows buffer with "*y
+if vim.fn.executable("win32yank.exe") == 1 then
 vim.g.clipboard = {
   name = 'win32yank',
   copy = {
@@ -298,6 +317,7 @@ vim.g.clipboard = {
   },
   cache_enabled = 0,
 }
+end
 
 -- Autocomplete settings
 local cmp = require('cmp')
@@ -334,7 +354,7 @@ require("luasnip").config.set_config {
 
 -- highlight inline code blocks in markdown
 require'nvim-treesitter.configs'.setup {
-  ensure_installed = { "python", "bash", "markdown", "markdown_inline" },
+  ensure_installed = vim.fn.executable("cc") == 1 and { "python", "bash", "markdown", "markdown_inline" } or {},
   highlight = {
     enable = true,
     disable = { "markdown" },
