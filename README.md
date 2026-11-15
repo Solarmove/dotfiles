@@ -10,7 +10,7 @@
 curl -fsSL https://raw.githubusercontent.com/Solarmove/dotfiles/main/install.sh -o /tmp/solarmove-install.sh && bash /tmp/solarmove-install.sh
 ```
 
-Скрипт скачает репозиторий в `~/dotfiles`, установит зависимости и создаст ссылки на конфиги. На macOS для первой установки Xcode Command Line Tools появится системное окно: подтверди установку и **повтори команду** после завершения. Homebrew и sudo могут запросить пароль. Требуются интернет, права администратора и свободное место. Не запускай скрипт от root. Внимательно проверь код перед запуском скачанного скрипта.
+Скрипт скачает репозиторий в `~/dotfiles`, установит зависимости и создаст ссылки на конфиги. На macOS используются MacPorts и загрузки с сайтов разработчиков, **Homebrew не нужен**. Для первой установки Xcode Command Line Tools появится системное окно: подтверди установку и **повтори команду** после завершения. `sudo` запросит пароль администратора. Требуются интернет и много свободного места. Не запускай скрипт от root. Внимательно проверь код перед запуском скачанного скрипта.
 
 Из уже клонированного репозитория, включая неопубликованные изменения:
 
@@ -24,11 +24,12 @@ bash ~/dotfiles/install.sh
 
 ### Что устанавливается
 
-- Homebrew; на macOS также потребуются Command Line Tools. Linux bootstrap рассчитан на Ubuntu/Debian с `apt`.
+- macOS: MacPorts в `/opt/local` и Command Line Tools. Установщик выбирает официальный пакет для версий 13, 14, 15, 26 и 27, проверяет SHA-256 и подпись пакета. Рассчитан на Intel и Apple Silicon, в том числе macOS 15.8 Intel. Некоторые порты могут собираться из исходников и занимать часы и много диска. На неподдерживаемой версии macOS скрипт остановится.
+- Linux: Ubuntu/Debian с `apt` и Linuxbrew для актуальных CLI-программ.
 - zsh, Oh My Zsh, fzf-tab, autosuggestions, history-substring-search, vi-mode, fast-syntax-highlighting; tmux и TPM/resurrect/continuum.
 - Git, GitHub CLI, eza, fzf, fd, bat, ripgrep, zoxide, lf, lazygit, Python, uv, Node.js/npm, Hack и JetBrains Mono Nerd Fonts.
 - Neovim не ниже 0.12 (если нужно — официальный 0.12.6), плагины из `current-nvim/nvim-pack-lock.json`, инструменты Mason и парсеры Tree-sitter. Для сборки нужны компилятор и интернет; установка может быть долгой.
-- На macOS: WezTerm, Ghostty, VS Code, Zed, Docker Desktop, Chrome, Spotify и Obsidian через Homebrew Cask. Список можно изменить в `install.sh`.
+- На macOS: WezTerm, Ghostty, VS Code, Zed, Docker Desktop, Chrome, Spotify и Obsidian скачиваются напрямую у разработчиков в `~/Applications`. Существующие приложения в `~/Applications` и `/Applications` не заменяются. WezTerm и Obsidian закреплены по версии; WezTerm проверяется по SHA-256. Список находится в `scripts/macos.sh`; подписи приложений проверяются перед копированием. Docker и другие приложения могут попросить разрешения при первом запуске. Совместимость отдельного приложения с конкретной macOS и оборудованием определяется его разработчиком.
 - Настройки и клавиши VS Code и Zed; 57 расширений VS Code устанавливаются, если команда VS Code доступна и не задан `--no-apps`. Шесть текущих расширений Zed автоматически устанавливаются при запуске Zed. Пути временных файлов удалены из настроек VS Code, а глобальное доверие всем проектам отключено в Zed. Остальные данные приложений не копируются.
 - На Ubuntu/Debian x86_64: WezTerm AppImage (распакован без FUSE) и шрифты. Другие графические приложения Linux автоматически не устанавливаются. На Linux ARM для WezTerm нужна ручная установка или `--no-apps`.
 
@@ -42,7 +43,7 @@ bash ~/dotfiles/install.sh --skip-packages # не устанавливать с�
 bash ~/dotfiles/install.sh --link-only     # только ссылки и резервные копии
 ```
 
-`--skip-packages` по-прежнему скачивает плагины shell/Neovim, расширения VS Code и инструменты Mason; требуемые программы должны быть уже установлены. На Linux ARM Markdown Preview не имеет готового бинарника в upstream. macOS и Linux могут отличаться доступностью отдельных инструментов Mason; ошибка установки останавливает скрипт, после устранения причины его можно повторить.
+`--skip-packages` по-прежнему скачивает плагины shell/Neovim, расширения VS Code и инструменты Mason; требуемые программы должны быть уже установлены. На Linux ARM Markdown Preview не имеет готового бинарника в upstream. macOS и Linux могут отличаться доступностью отдельных инструментов Mason; ошибка установки останавливает скрипт, после устранения причины его можно повторить. Если установка графического приложения или расширения VS Code завершилась ошибкой, скрипт продолжит устанавливать редактор, но в конце сообщит об ошибке. Проверки macOS с подменой команд не заменяют запуск на самом Mac.
 
 ## Neovim и проверка
 
@@ -51,6 +52,7 @@ bash ~/dotfiles/install.sh --link-only     # только ссылки и рез
 ```sh
 bash -n ~/dotfiles/install.sh
 bash ~/dotfiles/tests/test-links.sh
+bash ~/dotfiles/tests/test-macos.sh # тесты с имитацией macOS, без установки приложений
 DOTFILES_AUTO_TMUX=0 zsh -ic 'command -v nvim tmux fzf rg'
 nvim --headless +qa
 ```

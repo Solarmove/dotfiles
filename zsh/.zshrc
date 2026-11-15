@@ -38,12 +38,16 @@ source "$DOTFILES_DIR/zsh/plugins.zsh"
 if [[ "${DOTFILES_AUTO_TMUX:-1}" == 1 && -o interactive && -t 0 && -t 1 && -z "$TMUX" ]] && command -v tmux >/dev/null 2>&1; then
   exec tmux new-session
 fi
-# Homebrew's prefix differs between Apple Silicon, Intel macOS and Linux.
-for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-  if [[ -x "$brew_bin" ]]; then
-    eval "$("$brew_bin" shellenv)"
-    break
-  fi
-done
-unset brew_bin
+# Prefer MacPorts when present; keep Linuxbrew support on Linux.
+if [[ -x /opt/local/bin/port ]]; then
+  export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+else
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [[ -x "$brew_bin" ]]; then
+      eval "$("$brew_bin" shellenv)"
+      break
+    fi
+  done
+  unset brew_bin
+fi
 export PATH="$HOME/.local/bin:$PATH"

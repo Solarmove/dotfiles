@@ -9,14 +9,18 @@ fi
 # Finished adapting your PATH environment variable for use with MacPorts.
 
 
-# Make Homebrew and user binaries available to login shells and tmux.
-for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-  if [[ -x "$brew_bin" ]]; then
-    eval "$("$brew_bin" shellenv)"
-    break
-  fi
-done
-unset brew_bin
+# MacPorts takes precedence on macOS; Linux can use Linuxbrew.
+if [[ -x /opt/local/bin/port ]]; then
+  export PATH="/opt/local/bin:/opt/local/sbin:$PATH"
+else
+  for brew_bin in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
+    if [[ -x "$brew_bin" ]]; then
+      eval "$("$brew_bin" shellenv)"
+      break
+    fi
+  done
+  unset brew_bin
+fi
 
 # >>> Codex installer >>>
 [[ -d "$HOME/.local/bin" ]] && export PATH="$HOME/.local/bin:$PATH"

@@ -91,38 +91,31 @@ if [[ "$LINK_ONLY" == 1 ]]; then
   exit 0
 fi
 
+apps_failed=0
 if [[ "$PACKAGES" == 1 ]]; then
-  if [[ "$OS" == Linux ]]; then
+  if [[ "$OS" == Darwin ]]; then
+    source "$DOTFILES_DIR/scripts/macos.sh"
+    macos_install_ports
+    macos_install_fonts
+    if [[ "$APPS" == 1 ]]; then
+      macos_install_apps || apps_failed=1
+    fi
+  else
     command -v apt-get >/dev/null || fail "Linux package bootstrap currently supports Debian/Ubuntu."
     sudo apt-get update
     sudo apt-get install -y build-essential procps file git curl ca-certificates unzip xz-utils zsh tmux xclip wl-clipboard
-  fi
-  # Homebrew supplies recent cross-platform versions of the development tools.
-  for candidate in /opt/homebrew/bin/brew /usr/local/bin/brew /home/linuxbrew/.linuxbrew/bin/brew; do
-    if [[ -x "$candidate" ]]; then eval "$("$candidate" shellenv)"; break; fi
-  done
-  if ! command -v brew >/dev/null; then
-    tmp="$(mktemp)"
-    curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -o "$tmp"
-    NONINTERACTIVE=1 /bin/bash "$tmp"
-    rm -f "$tmp"
-    if [[ "$OS" == Linux ]]; then candidate=/home/linuxbrew/.linuxbrew/bin/brew
-    elif [[ "$ARCH" == arm64 ]]; then candidate=/opt/homebrew/bin/brew
-    else candidate=/usr/local/bin/brew; fi
-    [[ -x "$candidate" ]] || fail "Homebrew was not installed at $candidate"
-    eval "$("$candidate" shellenv)"
-  fi
-  export PATH="$HOME/.local/bin:$PATH"
-  brew install git zsh tmux eza fzf fd bat ripgrep zoxide lf lazygit node python uv gh
-  if [[ "$OS" == Darwin ]]; then
-    brew install --cask font-hack-nerd-font font-jetbrains-mono-nerd-font
-    if [[ "$APPS" == 1 ]]; then
-      # These are applications observed on the source machine; sign-in is separate.
-      for app in wezterm ghostty visual-studio-code zed docker google-chrome spotify obsidian; do
-        brew list --cask "$app" >/dev/null 2>&1 || brew install --cask "$app"
-      done
+    # Linux continues to use Linuxbrew for up-to-date CLI packages.
+    if [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]]; then eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; fi
+    if ! command -v brew >/dev/null; then
+      tmp="$(mktemp)"
+      curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh -o "$tmp"
+      NONINTERACTIVE=1 /bin/bash "$tmp"
+      rm -f "$tmp"
+      [[ -x /home/linuxbrew/.linuxbrew/bin/brew ]] || fail "Linuxbrew was not installed."
+      eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
     fi
-  else
+    export PATH="$HOME/.local/bin:$PATH"
+    brew install git zsh tmux eza fzf fd bat ripgrep zoxide lf lazygit node python uv gh
     if [[ ! -f "$HOME/.local/share/fonts/HackNerdFont-Regular.ttf" ]]; then
       tmpdir="$(mktemp -d)"
       curl -fL https://github.com/ryanoasis/nerd-fonts/releases/download/v3.4.0/Hack.zip -o "$tmpdir/Hack.zip"
@@ -157,7 +150,10 @@ if [[ "$PACKAGES" == 1 ]]; then
     fi
   fi
 fi
-for tool in git curl zsh tmux node npm uv; do command -v "$tool" >/dev/null || fail "Missing $tool; rerun without --skip-packages."; done
+for tool in git curl zsh tmux node npm uv eza fzf fd bat rg zoxide lf lazygit; do
+  command -v "$tool" >/dev/null || fail "Missing $tool; rerun without --skip-packages."
+done
+[[ "$(node -p 'Number(process.versions.node.split(".")[0]) >= 20')" == true ]] || fail "Node.js 20 or newer is required; check PATH and rerun."
 
 # The current config uses vim.pack (Neovim 0.12), not the old lazy.nvim config.
 if ! command -v nvim >/dev/null || [[ "$(nvim --headless -u NONE '+lua io.write(vim.fn.has("nvim-0.12"))' +qa 2>/dev/null)" != 1 ]]; then
@@ -182,6 +178,7 @@ if ! command -v nvim >/dev/null || [[ "$(nvim --headless -u NONE '+lua io.write(
   ln -sfn "$install_dir/bin/nvim" "$HOME/.local/bin/nvim"
   rm -rf "$tmpdir"
   hash -r
+  [[ "$(nvim --headless -u NONE '+lua io.write(vim.fn.has("nvim-0.12"))' +qa 2>/dev/null)" == 1 ]] || fail "Installed Neovim could not start on this system."
 fi
 clone_once() {
   local repo="$1" destination="$2" temp
@@ -204,8 +201,13 @@ link_all
 # Install only the public VS Code extensions list, never application storage.
 if [[ "$APPS" == 1 ]]; then
   code_bin="$(command -v code || true)"
-  if [[ -z "$code_bin" && "$OS" == Darwin && -x '/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code' ]]; then
-    code_bin='/Applications/Visual Studio Code.app/Contents/Resources/app/bin/code'
+  if [[ -z "$code_bin" && "$OS" == Darwin ]]; then
+    for app_dir in "$HOME/Applications" /Applications; do
+      if [[ -x "$app_dir/Visual Studio Code.app/Contents/Resources/app/bin/code" ]]; then
+        code_bin="$app_dir/Visual Studio Code.app/Contents/Resources/app/bin/code"
+        break
+      fi
+    done
   fi
   if [[ -n "$code_bin" ]]; then
     failed_extensions=0
@@ -213,7 +215,10 @@ if [[ "$APPS" == 1 ]]; then
       [[ -z "$extension" ]] && continue
       "$code_bin" --install-extension "$extension" || { printf 'VS Code extension failed: %s\n' "$extension" >&2; failed_extensions=1; }
     done < "$DOTFILES_DIR/config/vscode/extensions.txt"
-    [[ "$failed_extensions" == 0 ]] || fail "Some VS Code extensions failed; rerun the installer."
+    if [[ "$failed_extensions" != 0 ]]; then
+      printf 'Some VS Code extensions failed; continuing with Neovim installation.\n' >&2
+      apps_failed=1
+    fi
   fi
 fi
 unset NVIM_APPNAME
@@ -223,6 +228,9 @@ DOTFILES_NVIM_INSTALL=1 nvim --headless '+MasonToolsInstallSync' \
   '+lua local ok, err = pcall(dofile, vim.env.DOTFILES_DIR .. "/current-nvim/install-check.lua"); if not ok then io.stderr:write(tostring(err) .. "\n"); vim.cmd("cquit") end' '+qa'
 DOTFILES_NVIM_INSTALL=1 nvim --headless '+lua if #vim.v.errmsg > 0 then io.stderr:write(vim.v.errmsg); vim.cmd("cquit") end' '+qa'
 
+if [[ "$apps_failed" != 0 ]]; then
+  fail "Some applications or VS Code extensions failed; see errors above and rerun. Core tools and configuration were installed."
+fi
 # WezTerm explicitly starts zsh, so changing the account's login shell is not needed.
 printf '\nDone. Open WezTerm. Backup: %s\n' "${BACKUP_DIR:-none}"
 printf 'Copilot, Git, Docker and other applications may require separate sign-in.\n'
