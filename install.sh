@@ -224,7 +224,9 @@ fi
 unset NVIM_APPNAME
 # vim.pack.add installs pinned plugins. Wait for Mason and all parsers, and
 # explicitly verify package status; :MasonToolsInstallSync itself can hide errors.
-DOTFILES_NVIM_INSTALL=1 nvim --headless '+MasonToolsInstallSync' \
+DOTFILES_NVIM_INSTALL=1 nvim --headless \
+  '+lua if #vim.v.errmsg > 0 then io.stderr:write("Neovim startup failed: " .. vim.v.errmsg .. "\n"); vim.cmd("cquit") end' \
+  '+MasonToolsInstallSync' \
   '+lua local ok, err = pcall(dofile, vim.env.DOTFILES_DIR .. "/current-nvim/install-check.lua"); if not ok then io.stderr:write(tostring(err) .. "\n"); vim.cmd("cquit") end' '+qa'
 DOTFILES_NVIM_INSTALL=1 nvim --headless '+lua if #vim.v.errmsg > 0 then io.stderr:write(vim.v.errmsg); vim.cmd("cquit") end' '+qa'
 

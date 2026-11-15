@@ -4,7 +4,14 @@ end
 
 require("craftzdog.plugins.markdown")
 
-vim.pack.add({
+local add_plugins = vim.pack.add
+if vim.env.DOTFILES_NVIM_INSTALL == "1" then
+	local bootstrap = require("craftzdog.config.install_bootstrap")
+	bootstrap.recover_incomplete_plugins()
+	add_plugins = bootstrap.add_plugins
+end
+
+add_plugins({
 	-- UI
 	{ src = gh("craftzdog/solarized-osaka.nvim") },
 	{ src = gh("nvim-mini/mini.icons") },
