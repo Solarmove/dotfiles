@@ -1,4 +1,11 @@
 local TS = require("nvim-treesitter")
+if type(TS.install) ~= "function" or type(TS.get_installed) ~= "function" then
+	local paths = vim.list_extend(
+		vim.api.nvim_get_runtime_file("lua/nvim-treesitter.lua", true),
+		vim.api.nvim_get_runtime_file("lua/nvim-treesitter/init.lua", true)
+	)
+	error("Incompatible nvim-treesitter module; runtime candidates:\n" .. table.concat(paths, "\n"))
+end
 
 if vim.fn.has("win32") == 1 and vim.fn.executable("cl.exe") == 0 then
 	vim.env.CC = "gcc"

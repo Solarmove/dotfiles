@@ -7,21 +7,26 @@ function M.recover_incomplete_plugins()
   local lock = vim.json.decode(table.concat(vim.fn.readfile(lock_path), "\n"))
   local root = vim.fn.stdpath("data") .. "/site/pack/core/opt"
   local backup
-  for name in pairs(lock.plugins) do
+  for name, spec in pairs(lock.plugins) do
     assert(name ~= "." and name ~= ".." and not name:find("[/\\]"), "Invalid plugin name in lockfile")
+    assert(type(spec.rev) == "string" and spec.rev:match("^[0-9a-f]+$"), "Invalid plugin revision: " .. name)
     local path = root .. "/" .. name
     if vim.uv.fs_stat(path) then
       local head = vim.system({ "git", "-C", path, "rev-parse", "--verify", "HEAD" }, { text = true }):wait()
-      -- A git clone interrupted before checkout can have HEAD but an empty index.
+      -- An interrupted clone can have HEAD, but the wrong revision or an empty index.
       local files = vim.system({ "git", "-C", path, "ls-files" }, { text = true }):wait()
-      if head.code ~= 0 or files.code ~= 0 or (files.stdout or "") == "" then
+      -- vim.pack regenerates doc/tags for some plugins; this is normal.
+      local status = vim.system({ "git", "-C", path, "status", "--porcelain", "--untracked-files=no", "--", ".", ":(exclude)doc/tags" }, { text = true }):wait()
+      if head.code ~= 0 or vim.trim(head.stdout or "") ~= spec.rev
+        or files.code ~= 0 or (files.stdout or "") == ""
+        or status.code ~= 0 or (status.stdout or "") ~= "" then
         if not backup then
           backup = vim.fn.stdpath("state") .. "/dotfiles-incomplete-plugins/" .. os.date("%Y%m%d-%H%M%S") .. "-" .. vim.fn.getpid()
           vim.fn.mkdir(backup, "p")
         end
         local ok, err = vim.uv.fs_rename(path, backup .. "/" .. name)
         assert(ok, "Could not back up incomplete plugin " .. path .. ": " .. tostring(err))
-        vim.api.nvim_echo({ { "Backed up incomplete plugin " .. name .. " to " .. backup } }, true, {})
+        vim.api.nvim_echo({ { "Backed up incomplete or modified plugin " .. name .. " to " .. backup } }, true, {})
       end
     end
   end
